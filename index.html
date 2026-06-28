@@ -52,7 +52,7 @@
     background: var(--surface);
     border: 1px solid var(--border);
     border-radius: 20px;
-    padding: 2rem 1.5rem 1.5rem;
+    padding: 1.5rem 1.5rem 1.25rem;
     text-align: center;
     margin-bottom: 1rem;
     min-height: 140px;
@@ -60,17 +60,40 @@
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    gap: 8px;
-    transition: opacity 0.2s;
+    gap: 6px;
+    overflow: hidden;
   }
-  .pokemon-type {
-    font-size: 11px;
-    color: var(--text-sub);
-    letter-spacing: 0.08em;
-    opacity: 0.7;
+  .pokemon-card.slide-out {
+    opacity: 0;
+    transform: translateX(-24px);
+    transition: opacity 0.15s ease, transform 0.15s ease;
+  }
+  .pokemon-card.slide-in {
+    opacity: 0;
+    transform: translateX(24px);
+    transition: none;
+  }
+  .pokemon-card.slide-in-active {
+    opacity: 1;
+    transform: translateX(0);
+    transition: opacity 0.2s ease, transform 0.2s ease;
+  }
+  .pokemon-icon {
+    width: 80px;
+    height: 80px;
+    object-fit: contain;
+    image-rendering: auto;
+  }
+  .pokemon-icon-placeholder {
+    width: 80px;
+    height: 80px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 40px;
   }
   .pokemon-name {
-    font-size: 26px;
+    font-size: 24px;
     font-weight: 700;
     color: var(--text);
     letter-spacing: 0.02em;
@@ -104,7 +127,34 @@
     background: var(--green-light);
     color: var(--green);
   }
+  /* A: スケールポン */
+  .choice-btn.pop {
+    animation: btn-pop 0.25s ease forwards;
+  }
+  @keyframes btn-pop {
+    0%   { transform: scale(1); }
+    40%  { transform: scale(1.045); border-color: var(--green); background: var(--green-light); color: var(--green); }
+    100% { transform: scale(1); }
+  }
+  /* チェックマーク飛び出し用ラッパー */
+  .choice-btn { position: relative; overflow: visible; }
   .choice-icon { font-size: 18px; flex-shrink: 0; width: 24px; text-align: center; }
+  /* C: チェックマーク */
+  .check-pop {
+    position: absolute;
+    right: 16px;
+    top: 50%;
+    transform: translateY(-50%) scale(0);
+    font-size: 20px;
+    color: var(--green);
+    pointer-events: none;
+    animation: check-appear 0.35s ease forwards;
+  }
+  @keyframes check-appear {
+    0%   { transform: translateY(-50%) scale(0); opacity: 1; }
+    45%  { transform: translateY(-60%) scale(1.3); opacity: 1; }
+    100% { transform: translateY(-80%) scale(1); opacity: 0; }
+  }
 
   /* スキップ・戻る */
   .nav-row { display: flex; justify-content: space-between; align-items: center; margin-top: 0.5rem; }
@@ -157,6 +207,25 @@
   }
   @keyframes spin { to { transform: rotate(360deg); } }
   .sending-text { font-size: 13px; color: var(--text-sub); }
+
+  /* 重複警告 */
+  .already-done {
+    display: none;
+    text-align: center;
+    padding: 3rem 1rem;
+    flex-direction: column;
+    align-items: center;
+    gap: 1rem;
+  }
+  .already-done.visible { display: flex; }
+  .already-done-icon { font-size: 48px; }
+  .already-done-title { font-size: 18px; font-weight: 700; }
+  .already-done-sub { font-size: 14px; color: var(--text-sub); line-height: 1.7; }
+  .retry-btn {
+    padding: 12px 24px; border-radius: 12px; border: 1.5px solid var(--border);
+    background: var(--surface); font-family: inherit; font-size: 14px;
+    font-weight: 600; color: var(--text); cursor: pointer;
+  }
 </style>
 </head>
 <body>
@@ -167,10 +236,18 @@
 
 <div class="container" id="main-container">
 
+  <!-- 送信済み画面 -->
+  <div class="already-done" id="already-done">
+    <div class="already-done-icon">📋</div>
+    <div class="already-done-title">回答済みです</div>
+    <div class="already-done-sub">このブラウザからはすでに回答が送信されています。<br>もう一度回答したい場合は下のボタンを押してください。</div>
+    <button class="retry-btn" onclick="resetAndStart()">もう一度回答する</button>
+  </div>
+
   <!-- 進捗 -->
-  <div class="progress-wrap">
+  <div class="progress-wrap" id="progress-wrap">
     <div class="progress-info">
-      <span class="progress-count" id="progress-count">1 / 130</span>
+      <span class="progress-count" id="progress-count">1 / 100</span>
       <span class="progress-pct" id="progress-pct">0%</span>
     </div>
     <div class="progress-bar">
@@ -180,7 +257,8 @@
 
   <!-- ポケモンカード -->
   <div class="pokemon-card" id="pokemon-card">
-    <div class="pokemon-type" id="pokemon-type"></div>
+    <img class="pokemon-icon" id="pokemon-icon" src="" alt="" onerror="this.style.display='none';document.getElementById('pokemon-icon-fallback').style.display='flex'">
+    <div class="pokemon-icon-placeholder" id="pokemon-icon-fallback" style="display:none">🐾</div>
     <div class="pokemon-name" id="pokemon-name"></div>
   </div>
 
@@ -193,7 +271,7 @@
     <button class="choice-btn" onclick="answer(4)"><span class="choice-icon">🙅</span>送ってほしくない</button>
   </div>
 
-  <div class="nav-row">
+  <div class="nav-row" id="nav-row">
     <button class="nav-btn" id="btn-back" onclick="goBack()" disabled>← 前に戻る</button>
     <button class="nav-btn" id="btn-skip" onclick="skip()">スキップ →</button>
   </div>
@@ -218,133 +296,116 @@
 
 <script>
 const GAS_URL = 'https://script.google.com/macros/s/AKfycbx45Ab0Npm57ZPBHd7pdKvqEjRvbYnOswoTy4aJG94F8MT9FzJeRR90LnJ_0oEsvkzvBA/exec';
+const STORAGE_KEY = 'ame_survey_2026_done';
+const STORAGE_ANSWERS_KEY = 'ame_survey_2026_answers';
+const STORAGE_ORDER_KEY = 'ame_survey_2026_order';
 
 const SCORES = [7, 3, 0, -3, -7];
 const LABELS = ['もっと欲しい（集めてる）', '嬉しい', 'どちらでもいい', '許せるが欲しくはない', '送ってほしくない'];
 
 const pokemon = [
-  {id:'#3',name:'フシギバナ',type:'くさ'},
-  {id:'#6',name:'リザードン',type:'ほのお'},
-  {id:'#9',name:'カメックス',type:'みず'},
-  {id:'#12',name:'バタフリー',type:'むし'},
-  {id:'#20',name:'ラッタ',type:'ノーマル'},
-  {id:'#24',name:'アーボック',type:'どく'},
-  {id:'#9001-1',name:'ピカチュウ(ハロウィン) (オレンジ)',type:'でんき'},
-  {id:'#9001-2',name:'ピカチュウ(ハロウィン) (パープル)',type:'でんき'},
-  {id:'#9002',name:'ピカチュウ(ホリデー)',type:'でんき'},
-  {id:'#26',name:'ライチュウ',type:'でんき'},
-  {id:'#28',name:'サンドパン',type:'じめん'},
-  {id:'#36',name:'ピクシー',type:'フェアリー'},
-  {id:'#38',name:'キュウコン',type:'ほのお'},
-  {id:'#7007',name:'キュウコン(アローラのすがた)',type:'こおり'},
-  {id:'#40',name:'プクリン',type:'フェアリー'},
-  {id:'#51',name:'ダグトリオ',type:'じめん'},
-  {id:'#53',name:'ペルシアン',type:'ノーマル'},
-  {id:'#55',name:'ゴルダック',type:'みず'},
-  {id:'#57',name:'オコリザル',type:'かくとう'},
-  {id:'#59',name:'ウインディ',type:'ほのお'},
-  {id:'#71',name:'ウツボット',type:'くさ'},
-  {id:'#76',name:'ゴローニャ',type:'いわ'},
-  {id:'#80',name:'ヤドラン',type:'みず'},
-  {id:'#83',name:'カモネギ',type:'ひこう'},
-  {id:'#85',name:'ドードリオ',type:'ひこう'},
-  {id:'#94',name:'ゲンガー',type:'ゴースト'},
-  {id:'#105',name:'ガラガラ',type:'じめん'},
-  {id:'#115',name:'ガルーラ',type:'ノーマル'},
-  {id:'#122',name:'バリヤード',type:'エスパー'},
-  {id:'#127',name:'カイロス',type:'むし'},
-  {id:'#132',name:'メタモン',type:'ノーマル'},
-  {id:'#9004',name:'イーブイ(ホリデー)',type:'ノーマル'},
-  {id:'#9005',name:'イーブイ(ハロウィン)',type:'ノーマル'},
-  {id:'#134',name:'シャワーズ',type:'みず'},
-  {id:'#135',name:'サンダース',type:'でんき'},
-  {id:'#136',name:'ブースター',type:'ほのお'},
-  {id:'#149',name:'カイリュー',type:'ドラゴン'},
-  {id:'#151',name:'ミュウ',type:'エスパー'},
-  {id:'#154',name:'メガニウム',type:'くさ'},
-  {id:'#157',name:'バクフーン',type:'ほのお'},
-  {id:'#160',name:'オーダイル',type:'みず'},
-  {id:'#178',name:'ネイティオ',type:'エスパー'},
-  {id:'#181',name:'デンリュウ',type:'でんき'},
-  {id:'#185',name:'ウソッキー',type:'いわ'},
-  {id:'#195',name:'ヌオー',type:'みず'},
-  {id:'#196',name:'エーフィ',type:'エスパー'},
-  {id:'#197',name:'ブラッキー',type:'あく'},
-  {id:'#199',name:'ヤドキング',type:'みず'},
-  {id:'#202',name:'ソーナンス',type:'エスパー'},
-  {id:'#208',name:'ハガネール',type:'はがね'},
-  {id:'#213',name:'ツボツボ',type:'むし'},
-  {id:'#214',name:'ヘラクロス',type:'むし'},
-  {id:'#225',name:'デリバード',type:'ひこう'},
-  {id:'#229',name:'ヘルガー',type:'あく'},
-  {id:'#242',name:'ハピナス',type:'ノーマル'},
-  {id:'#243',name:'ライコウ',type:'でんき'},
-  {id:'#244',name:'エンテイ',type:'ほのお'},
-  {id:'#245',name:'スイクン',type:'みず'},
-  {id:'#248',name:'バンギラス',type:'あく'},
-  {id:'#254',name:'ジュカイン',type:'くさ'},
-  {id:'#257',name:'バシャーモ',type:'かくとう'},
-  {id:'#260',name:'ラグラージ',type:'じめん'},
-  {id:'#282',name:'サーナイト',type:'エスパー'},
-  {id:'#289',name:'ケッキング',type:'ノーマル'},
-  {id:'#302',name:'ヤミラミ',type:'あく'},
-  {id:'#303',name:'クチート',type:'はがね'},
-  {id:'#306',name:'ボスゴドラ',type:'はがね'},
-  {id:'#311',name:'プラスル',type:'でんき'},
-  {id:'#312',name:'マイナン',type:'でんき'},
-  {id:'#317',name:'マルノーム',type:'どく'},
-  {id:'#330',name:'フライゴン',type:'じめん'},
-  {id:'#334',name:'チルタリス',type:'ドラゴン'},
-  {id:'#354',name:'ジュペッタ',type:'ゴースト'},
-  {id:'#359',name:'アブソル',type:'あく'},
-  {id:'#9006',name:'タマザラシ(ホリデー)',type:'こおり'},
-  {id:'#365',name:'トドゼルガ',type:'こおり'},
-  {id:'#373',name:'ボーマンダ',type:'ドラゴン'},
-  {id:'#380',name:'ラティアス',type:'ドラゴン'},
-  {id:'#405',name:'レントラー',type:'でんき'},
-  {id:'#426',name:'フワライド',type:'ゴースト'},
-  {id:'#430',name:'ドンカラス',type:'あく'},
-  {id:'#442',name:'ミカルゲ',type:'あく'},
-  {id:'#448',name:'ルカリオ',type:'かくとう'},
-  {id:'#454',name:'ドクロッグ',type:'どく'},
-  {id:'#460',name:'ユキノオー',type:'こおり'},
-  {id:'#461',name:'マニューラ',type:'あく'},
-  {id:'#462',name:'ジバコイル',type:'はがね'},
-  {id:'#468',name:'トゲキッス',type:'フェアリー'},
-  {id:'#470',name:'リーフィア',type:'くさ'},
-  {id:'#471',name:'グレイシア',type:'こおり'},
-  {id:'#475',name:'エルレイド',type:'かくとう'},
-  {id:'#488',name:'クレセリア',type:'エスパー'},
-  {id:'#491',name:'ダークライ',type:'あく'},
-  {id:'#518',name:'ムシャーナ',type:'エスパー'},
-  {id:'#558',name:'イワパレス',type:'むし'},
-  {id:'#628',name:'ウォーグル',type:'ひこう'},
-  {id:'#697',name:'ガチゴラス',type:'いわ'},
-  {id:'#700',name:'ニンフィア',type:'フェアリー'},
-  {id:'#702',name:'デデンネ',type:'でんき'},
-  {id:'#711-1',name:'パンプジン (ちゅうだましゅ)',type:'ゴースト'},
-  {id:'#711-2',name:'パンプジン (こだましゅ)',type:'ゴースト'},
-  {id:'#711-3',name:'パンプジン (おおだましゅ)',type:'ゴースト'},
-  {id:'#711-4',name:'パンプジン (ギガだましゅ)',type:'ゴースト'},
-  {id:'#715',name:'オンバーン',type:'ドラゴン'},
-  {id:'#738',name:'クワガノン',type:'むし'},
-  {id:'#743',name:'アブリボン',type:'フェアリー'},
-  {id:'#760',name:'キテルグマ',type:'かくとう'},
-  {id:'#764',name:'キュワワー',type:'フェアリー'},
-  {id:'#777',name:'トゲデマル',type:'はがね'},
-  {id:'#778',name:'ミミッキュ',type:'ゴースト'},
-  {id:'#845',name:'ウッウ',type:'ひこう'},
-  {id:'#849',name:'ストリンダー(ハイなすがた)',type:'どく'},
-  {id:'#8001',name:'ストリンダー(ローなすがた)',type:'どく'},
-  {id:'#908',name:'マスカーニャ',type:'あく'},
-  {id:'#911',name:'ラウドボーン',type:'ゴースト'},
-  {id:'#914',name:'ウェーニバル',type:'かくとう'},
-  {id:'#923',name:'パーモット',type:'でんき'},
-  {id:'#975',name:'ハルクジラ',type:'こおり'},
-  {id:'#980',name:'ドオー',type:'どく'},
+  {id:1,name:'フシギダネ',img:'icons/0001_フシギダネ.png'},
+  {id:4,name:'ヒトカゲ',img:'icons/0004_ヒトカゲ.png'},
+  {id:7,name:'ゼニガメ',img:'icons/0007_ゼニガメ.png'},
+  {id:10,name:'キャタピー',img:'icons/0010_キャタピー.png'},
+  {id:19,name:'コラッタ',img:'icons/0019_コラッタ.png'},
+  {id:23,name:'アーボ',img:'icons/0023_アーボ.png'},
+  {id:27,name:'サンド',img:'icons/0027_サンド.png'},
+  {id:37,name:'ロコン',img:'icons/0037_ロコン.png'},
+  {id:50,name:'ディグダ',img:'icons/0050_ディグダ.png'},
+  {id:52,name:'ニャース',img:'icons/0052_ニャース.png'},
+  {id:54,name:'コダック',img:'icons/0054_コダック.png'},
+  {id:56,name:'マンキー',img:'icons/0056_マンキー.png'},
+  {id:58,name:'ガーディ',img:'icons/0058_ガーディ.png'},
+  {id:69,name:'マダツボミ',img:'icons/0069_マダツボミ.png'},
+  {id:74,name:'イシツブテ',img:'icons/0074_イシツブテ.png'},
+  {id:79,name:'ヤドン',img:'icons/0079_ヤドン.png'},
+  {id:81,name:'コイル',img:'icons/0081_コイル.png'},
+  {id:83,name:'カモネギ',img:'icons/0083_カモネギ.png'},
+  {id:84,name:'ドードー',img:'icons/0084_ドードー.png'},
+  {id:92,name:'ゴース',img:'icons/0092_ゴース.png'},
+  {id:95,name:'イワーク',img:'icons/0095_イワーク.png'},
+  {id:104,name:'カラカラ',img:'icons/0104_カラカラ.png'},
+  {id:115,name:'ガルーラ',img:'icons/0115_ガルーラ.png'},
+  {id:127,name:'カイロス',img:'icons/0127_カイロス.png'},
+  {id:132,name:'メタモン',img:'icons/0132_メタモン.png'},
+  {id:133,name:'イーブイ',img:'icons/0133_イーブイ.png'},
+  {id:147,name:'ミニリュウ',img:'icons/0147_ミニリュウ.png'},
+  {id:151,name:'ミュウ',img:'icons/0151_ミュウ.png'},
+  {id:152,name:'チコリータ',img:'icons/0152_チコリータ.png'},
+  {id:155,name:'ヒノアラシ',img:'icons/0155_ヒノアラシ.png'},
+  {id:158,name:'ワニノコ',img:'icons/0158_ワニノコ.png'},
+  {id:25,name:'ピカチュウ',img:'icons/0025_ピカチュウ.png'},
+  {id:35,name:'ピッピ',img:'icons/0035_ピッピ.png'},
+  {id:39,name:'プリン',img:'icons/0039_プリン.png'},
+  {id:175,name:'トゲピー',img:'icons/0175_トゲピー.png'},
+  {id:177,name:'ネイティ',img:'icons/0177_ネイティ.png'},
+  {id:179,name:'メリープ',img:'icons/0179_メリープ.png'},
+  {id:194,name:'ウパー',img:'icons/0194_ウパー.png'},
+  {id:198,name:'ヤミカラス',img:'icons/0198_ヤミカラス.png'},
+  {id:213,name:'ツボツボ',img:'icons/0213_ツボツボ.png'},
+  {id:214,name:'ヘラクロス',img:'icons/0214_ヘラクロス.png'},
+  {id:215,name:'ニューラ',img:'icons/0215_ニューラ.png'},
+  {id:225,name:'デリバード',img:'icons/0225_デリバード.png'},
+  {id:228,name:'デルビル',img:'icons/0228_デルビル.png'},
+  {id:243,name:'ライコウ',img:'icons/0243_ライコウ.png'},
+  {id:244,name:'エンテイ',img:'icons/0244_エンテイ.png'},
+  {id:245,name:'スイクン',img:'icons/0245_スイクン.png'},
+  {id:246,name:'ヨーギラス',img:'icons/0246_ヨーギラス.png'},
+  {id:252,name:'キモリ',img:'icons/0252_キモリ.png'},
+  {id:255,name:'アチャモ',img:'icons/0255_アチャモ.png'},
+  {id:258,name:'ミズゴロウ',img:'icons/0258_ミズゴロウ.png'},
+  {id:280,name:'ラルトス',img:'icons/0280_ラルトス.png'},
+  {id:287,name:'ナマケロ',img:'icons/0287_ナマケロ.png'},
+  {id:302,name:'ヤミラミ',img:'icons/0302_ヤミラミ.png'},
+  {id:303,name:'クチート',img:'icons/0303_クチート.png'},
+  {id:304,name:'ココドラ',img:'icons/0304_ココドラ.png'},
+  {id:311,name:'プラスル',img:'icons/0311_プラスル.png'},
+  {id:312,name:'マイナン',img:'icons/0312_マイナン.png'},
+  {id:316,name:'ゴクリン',img:'icons/0316_ゴクリン.png'},
+  {id:328,name:'ナックラー',img:'icons/0328_ナックラー.png'},
+  {id:333,name:'チルット',img:'icons/0333_チルット.png'},
+  {id:353,name:'カゲボウズ',img:'icons/0353_カゲボウズ.png'},
+  {id:359,name:'アブソル',img:'icons/0359_アブソル.png'},
+  {id:202,name:'ソーナンス',img:'icons/0202_ソーナンス.png'},
+  {id:363,name:'タマザラシ',img:'icons/0363_タマザラシ.png'},
+  {id:371,name:'タツベイ',img:'icons/0371_タツベイ.png'},
+  {id:380,name:'ラティアス',img:'icons/0380_ラティアス.png'},
+  {id:381,name:'ラティオス',img:'icons/0381_ラティオス.png'},
+  {id:403,name:'コリンク',img:'icons/0403_コリンク.png'},
+  {id:425,name:'フワンテ',img:'icons/0425_フワンテ.png'},
+  {id:185,name:'ウソッキー',img:'icons/0185_ウソッキー.png'},
+  {id:122,name:'バリヤード',img:'icons/0122_バリヤード.png'},
+  {id:113,name:'ラッキー',img:'icons/0113_ラッキー.png'},
+  {id:442,name:'ミカルゲ',img:'icons/0442_ミカルゲ.png'},
+  {id:448,name:'ルカリオ',img:'icons/0448_ルカリオ.png'},
+  {id:453,name:'グレッグル',img:'icons/0453_グレッグル.png'},
+  {id:459,name:'ユキカブリ',img:'icons/0459_ユキカブリ.png'},
+  {id:488,name:'クレセリア',img:'icons/0488_クレセリア.png'},
+  {id:491,name:'ダークライ',img:'icons/0491_ダークライ.png'},
+  {id:517,name:'ムンナ',img:'icons/0517_ムンナ.png'},
+  {id:557,name:'イシズマイ',img:'icons/0557_イシズマイ.png'},
+  {id:627,name:'ワシボン',img:'icons/0627_ワシボン.png'},
+  {id:696,name:'チゴラス',img:'icons/0696_チゴラス.png'},
+  {id:702,name:'デデンネ',img:'icons/0702_デデンネ.png'},
+  {id:710,name:'バケッチャ',img:'icons/0710_バケッチャ.png'},
+  {id:714,name:'オンバット',img:'icons/0714_オンバット.png'},
+  {id:736,name:'アゴジムシ',img:'icons/0736_アゴジムシ.png'},
+  {id:742,name:'アブリー',img:'icons/0742_アブリー.png'},
+  {id:759,name:'ヌイコグマ',img:'icons/0759_ヌイコグマ.png'},
+  {id:764,name:'キュワワー',img:'icons/0764_キュワワー.png'},
+  {id:777,name:'トゲデマル',img:'icons/0777_トゲデマル.png'},
+  {id:778,name:'ミミッキュ',img:'icons/0778_ミミッキュ.png'},
+  {id:780,name:'ジジーロン',img:'icons/0780_ジジーロン.png'},
+  {id:845,name:'ウッウ',img:'icons/0845_ウッウ.png'},
+  {id:848,name:'エレズン',img:'icons/0848_エレズン.png'},
+  {id:906,name:'ニャオハ',img:'icons/0906_ニャオハ.png'},
+  {id:909,name:'ホゲータ',img:'icons/0909_ホゲータ.png'},
+  {id:912,name:'クワッス',img:'icons/0912_クワッス.png'},
+  {id:921,name:'パモ',img:'icons/0921_パモ.png'},
+  {id:974,name:'アルクジラ',img:'icons/0974_アルクジラ.png'}
 ];
 
-// シャッフル
 function shuffle(arr) {
   const a = [...arr];
   for(let i = a.length-1; i > 0; i--) {
@@ -354,33 +415,82 @@ function shuffle(arr) {
   return a;
 }
 
-const shuffled = shuffle(pokemon);
+// 前回の順序を復元、なければ新たにシャッフル
+let shuffled;
+const savedOrder = localStorage.getItem(STORAGE_ORDER_KEY);
+if(savedOrder) {
+  try {
+    const order = JSON.parse(savedOrder);
+    shuffled = order.map(id => pokemon.find(p => p.id === id)).filter(Boolean);
+  } catch(e) { shuffled = shuffle(pokemon); }
+} else {
+  shuffled = shuffle(pokemon);
+  localStorage.setItem(STORAGE_ORDER_KEY, JSON.stringify(shuffled.map(p => p.id)));
+}
+
 let current = 0;
-const answers = {}; // {index: {pokemon, answerIdx}}
+let answers = {};
+
+// 前回の回答を復元
+const savedAnswers = localStorage.getItem(STORAGE_ANSWERS_KEY);
+if(savedAnswers) {
+  try { answers = JSON.parse(savedAnswers); } catch(e) {}
+}
+
+function init() {
+  // 送信済みチェック
+  if(localStorage.getItem(STORAGE_KEY) === 'done') {
+    document.getElementById('already-done').classList.add('visible');
+    document.getElementById('progress-wrap').style.display = 'none';
+    document.getElementById('pokemon-card').style.display = 'none';
+    document.getElementById('choices').style.display = 'none';
+    document.getElementById('nav-row').style.display = 'none';
+    return;
+  }
+  showPokemon(current);
+}
+
+function resetAndStart() {
+  localStorage.removeItem(STORAGE_KEY);
+  localStorage.removeItem(STORAGE_ANSWERS_KEY);
+  localStorage.removeItem(STORAGE_ORDER_KEY);
+  shuffled = shuffle(pokemon);
+  localStorage.setItem(STORAGE_ORDER_KEY, JSON.stringify(shuffled.map(p => p.id)));
+  answers = {};
+  current = 0;
+  document.getElementById('already-done').classList.remove('visible');
+  document.getElementById('progress-wrap').style.display = '';
+  document.getElementById('pokemon-card').style.display = '';
+  document.getElementById('choices').style.display = '';
+  document.getElementById('nav-row').style.display = '';
+  showPokemon(0);
+}
 
 function showPokemon(idx) {
   const p = shuffled[idx];
-  document.getElementById('pokemon-type').textContent = p.type;
+
+  // アイコン
+  const iconEl = document.getElementById('pokemon-icon');
+  const fallbackEl = document.getElementById('pokemon-icon-fallback');
+  iconEl.style.display = '';
+  fallbackEl.style.display = 'none';
+  iconEl.src = p.img;
+  iconEl.alt = p.name;
+
   document.getElementById('pokemon-name').textContent = p.name;
 
-  // 進捗更新
   const pct = Math.round((idx / shuffled.length) * 100);
   document.getElementById('progress-count').textContent = `${idx + 1} / ${shuffled.length}`;
   document.getElementById('progress-pct').textContent = `${pct}%`;
   document.getElementById('progress-fill').style.width = `${pct}%`;
 
-  // ボタン状態リセット
   document.querySelectorAll('.choice-btn').forEach(b => b.classList.remove('selected'));
-
-  // 前回の回答があれば選択状態に
   if(answers[idx] !== undefined) {
     document.querySelectorAll('.choice-btn')[answers[idx]].classList.add('selected');
   }
 
-  // 戻るボタン
   document.getElementById('btn-back').disabled = (idx === 0);
 
-  // 最後のポケモンなら送信ボタン表示
   const isLast = (idx === shuffled.length - 1);
   document.getElementById('btn-skip').style.display = isLast ? 'none' : '';
   document.getElementById('submit-btn').classList.toggle('visible', isLast);
@@ -388,20 +498,58 @@ function showPokemon(idx) {
 
 function answer(choiceIdx) {
   answers[current] = choiceIdx;
-  document.querySelectorAll('.choice-btn').forEach((b,i) => {
-    b.classList.toggle('selected', i === choiceIdx);
+  localStorage.setItem(STORAGE_ANSWERS_KEY, JSON.stringify(answers));
+
+  const btns = document.querySelectorAll('.choice-btn');
+
+  // A: スケールポン + C: チェックマーク
+  btns.forEach((b, i) => {
+    b.classList.remove('selected', 'pop');
+    // 既存チェックを削除
+    const old = b.querySelector('.check-pop');
+    if(old) old.remove();
+
+    if(i === choiceIdx) {
+      // スケールポン
+      void b.offsetWidth; // reflow
+      b.classList.add('pop');
+
+      // チェックマーク飛び出し
+      const check = document.createElement('span');
+      check.className = 'check-pop';
+      check.textContent = '✓';
+      b.appendChild(check);
+      setTimeout(() => check.remove(), 400);
+    }
   });
 
-  // 少し待ってから次へ
+  // 250ms後にカードスライドアウト
   setTimeout(() => {
-    if(current < shuffled.length - 1) {
-      current++;
-      showPokemon(current);
-    } else {
-      // 最後は送信ボタンを目立たせる
-      document.getElementById('submit-btn').classList.add('visible');
-    }
-  }, 300);
+    const card = document.getElementById('pokemon-card');
+    card.classList.add('slide-out');
+
+    setTimeout(() => {
+      // ボタンのpopクラスをクリア
+      btns.forEach(b => b.classList.remove('pop'));
+
+      if(current < shuffled.length - 1) {
+        current++;
+        card.classList.remove('slide-out');
+        card.classList.add('slide-in');
+        showPokemon(current);
+        requestAnimationFrame(() => {
+          requestAnimationFrame(() => {
+            card.classList.remove('slide-in');
+            card.classList.add('slide-in-active');
+            setTimeout(() => card.classList.remove('slide-in-active'), 200);
+          });
+        });
+      } else {
+        card.classList.remove('slide-out');
+        document.getElementById('submit-btn').classList.add('visible');
+      }
+    }, 150);
+  }, 250);
 }
 
 function skip() {
@@ -445,15 +593,17 @@ async function submitAll() {
       body: JSON.stringify({ answers: answered })
     });
 
-    overlay.classList.remove('visible');
-    document.getElementById('progress-wrap');
+    // 送信済みフラグをローカルに保存
+    localStorage.setItem(STORAGE_KEY, 'done');
+    localStorage.removeItem(STORAGE_ANSWERS_KEY);
 
-    // 完了画面
+    overlay.classList.remove('visible');
+
     document.getElementById('pokemon-card').style.display = 'none';
     document.getElementById('choices').style.display = 'none';
-    document.querySelector('.nav-row').style.display = 'none';
+    document.getElementById('nav-row').style.display = 'none';
     document.getElementById('submit-btn').style.display = 'none';
-    document.querySelector('.progress-wrap').style.display = 'none';
+    document.getElementById('progress-wrap').style.display = 'none';
     const done = document.getElementById('done-screen');
     done.classList.add('visible');
     document.getElementById('done-count').textContent = `${answered.length}匹分の回答を送信しました`;
@@ -464,8 +614,7 @@ async function submitAll() {
   }
 }
 
-// 初期表示
-showPokemon(0);
+init();
 </script>
 </body>
 </html>
