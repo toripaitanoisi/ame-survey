@@ -136,24 +136,26 @@
     40%  { transform: scale(1.045); border-color: var(--green); background: var(--green-light); color: var(--green); }
     100% { transform: scale(1); }
   }
-  /* チェックマーク飛び出し用ラッパー */
-  .choice-btn { position: relative; overflow: visible; }
+  /* チェックマーク用ラッパー */
+  .choice-btn { position: relative; overflow: hidden; }
   .choice-icon { font-size: 18px; flex-shrink: 0; width: 24px; text-align: center; }
-  /* C: チェックマーク */
+  /* C: チェックマーク（ボタン内で右端に表示） */
   .check-pop {
     position: absolute;
     right: 16px;
     top: 50%;
     transform: translateY(-50%) scale(0);
-    font-size: 20px;
+    font-size: 22px;
+    font-weight: 700;
     color: var(--green);
     pointer-events: none;
     animation: check-appear 0.35s ease forwards;
   }
   @keyframes check-appear {
-    0%   { transform: translateY(-50%) scale(0); opacity: 1; }
-    45%  { transform: translateY(-60%) scale(1.3); opacity: 1; }
-    100% { transform: translateY(-80%) scale(1); opacity: 0; }
+    0%   { transform: translateY(-50%) scale(0); opacity: 0; }
+    30%  { transform: translateY(-50%) scale(1.3); opacity: 1; }
+    70%  { transform: translateY(-50%) scale(1);   opacity: 1; }
+    100% { transform: translateY(-50%) scale(1);   opacity: 0; }
   }
 
   /* スキップ・戻る */
@@ -185,13 +187,48 @@
     padding: 3rem 1rem;
     flex-direction: column;
     align-items: center;
-    gap: 1rem;
+    gap: 0.75rem;
   }
   .done-screen.visible { display: flex; }
-  .done-icon { font-size: 48px; }
-  .done-title { font-size: 20px; font-weight: 700; }
-  .done-sub { font-size: 14px; color: var(--text-sub); line-height: 1.7; }
-  .done-count { font-size: 13px; color: var(--accent); font-weight: 600; }
+  .done-icon {
+    font-size: 64px;
+    animation: done-icon-pop 0.6s cubic-bezier(0.34,1.56,0.64,1);
+  }
+  @keyframes done-icon-pop {
+    0%   { transform: scale(0) rotate(-20deg); opacity: 0; }
+    60%  { transform: scale(1.2) rotate(8deg); opacity: 1; }
+    100% { transform: scale(1) rotate(0deg); opacity: 1; }
+  }
+  .done-emojis {
+    font-size: 28px;
+    letter-spacing: 6px;
+    animation: done-emojis-in 0.5s ease 0.2s both;
+  }
+  @keyframes done-emojis-in {
+    0%   { opacity: 0; transform: translateY(8px); }
+    100% { opacity: 1; transform: translateY(0); }
+  }
+  .done-title {
+    font-size: 26px;
+    font-weight: 800;
+    color: var(--green);
+    animation: done-title-in 0.5s ease 0.15s both;
+  }
+  @keyframes done-title-in {
+    0%   { opacity: 0; transform: translateY(10px); }
+    100% { opacity: 1; transform: translateY(0); }
+  }
+  .done-sub {
+    font-size: 14px; color: var(--text-sub); line-height: 1.7;
+    animation: done-title-in 0.5s ease 0.3s both;
+  }
+  .done-count {
+    font-size: 14px; color: var(--accent); font-weight: 700;
+    background: var(--green-light);
+    padding: 8px 16px;
+    border-radius: 99px;
+    animation: done-title-in 0.5s ease 0.4s both;
+  }
 
   /* ローディング */
   .sending-overlay {
@@ -281,7 +318,8 @@
   <!-- 完了画面 -->
   <div class="done-screen" id="done-screen">
     <div class="done-icon">🎉</div>
-    <div class="done-title">回答ありがとうございました！</div>
+    <div class="done-title">おつかれさまでした！</div>
+    <div class="done-emojis">✨🎊💚🌟✨</div>
     <div class="done-sub">回答はスプレッドシートに保存されました。<br>ご協力ありがとうございます！</div>
     <div class="done-count" id="done-count"></div>
   </div>
@@ -304,106 +342,106 @@ const SCORES = [7, 3, 0, -3, -7];
 const LABELS = ['もっと欲しい（集めてる）', '嬉しい', 'どちらでもいい', '許せるが欲しくはない', '送ってほしくない'];
 
 const pokemon = [
-  {id:1,name:'フシギダネ',img:'icons/0001_フシギダネ.png'},
-  {id:4,name:'ヒトカゲ',img:'icons/0004_ヒトカゲ.png'},
-  {id:7,name:'ゼニガメ',img:'icons/0007_ゼニガメ.png'},
-  {id:10,name:'キャタピー',img:'icons/0010_キャタピー.png'},
-  {id:19,name:'コラッタ',img:'icons/0019_コラッタ.png'},
-  {id:23,name:'アーボ',img:'icons/0023_アーボ.png'},
-  {id:27,name:'サンド',img:'icons/0027_サンド.png'},
-  {id:37,name:'ロコン',img:'icons/0037_ロコン.png'},
-  {id:50,name:'ディグダ',img:'icons/0050_ディグダ.png'},
-  {id:52,name:'ニャース',img:'icons/0052_ニャース.png'},
-  {id:54,name:'コダック',img:'icons/0054_コダック.png'},
-  {id:56,name:'マンキー',img:'icons/0056_マンキー.png'},
-  {id:58,name:'ガーディ',img:'icons/0058_ガーディ.png'},
-  {id:69,name:'マダツボミ',img:'icons/0069_マダツボミ.png'},
-  {id:74,name:'イシツブテ',img:'icons/0074_イシツブテ.png'},
-  {id:79,name:'ヤドン',img:'icons/0079_ヤドン.png'},
-  {id:81,name:'コイル',img:'icons/0081_コイル.png'},
-  {id:83,name:'カモネギ',img:'icons/0083_カモネギ.png'},
-  {id:84,name:'ドードー',img:'icons/0084_ドードー.png'},
-  {id:92,name:'ゴース',img:'icons/0092_ゴース.png'},
-  {id:95,name:'イワーク',img:'icons/0095_イワーク.png'},
-  {id:104,name:'カラカラ',img:'icons/0104_カラカラ.png'},
-  {id:115,name:'ガルーラ',img:'icons/0115_ガルーラ.png'},
-  {id:127,name:'カイロス',img:'icons/0127_カイロス.png'},
-  {id:132,name:'メタモン',img:'icons/0132_メタモン.png'},
-  {id:133,name:'イーブイ',img:'icons/0133_イーブイ.png'},
-  {id:147,name:'ミニリュウ',img:'icons/0147_ミニリュウ.png'},
-  {id:151,name:'ミュウ',img:'icons/0151_ミュウ.png'},
-  {id:152,name:'チコリータ',img:'icons/0152_チコリータ.png'},
-  {id:155,name:'ヒノアラシ',img:'icons/0155_ヒノアラシ.png'},
-  {id:158,name:'ワニノコ',img:'icons/0158_ワニノコ.png'},
-  {id:25,name:'ピカチュウ',img:'icons/0025_ピカチュウ.png'},
-  {id:35,name:'ピッピ',img:'icons/0035_ピッピ.png'},
-  {id:39,name:'プリン',img:'icons/0039_プリン.png'},
-  {id:175,name:'トゲピー',img:'icons/0175_トゲピー.png'},
-  {id:177,name:'ネイティ',img:'icons/0177_ネイティ.png'},
-  {id:179,name:'メリープ',img:'icons/0179_メリープ.png'},
-  {id:194,name:'ウパー',img:'icons/0194_ウパー.png'},
-  {id:198,name:'ヤミカラス',img:'icons/0198_ヤミカラス.png'},
-  {id:213,name:'ツボツボ',img:'icons/0213_ツボツボ.png'},
-  {id:214,name:'ヘラクロス',img:'icons/0214_ヘラクロス.png'},
-  {id:215,name:'ニューラ',img:'icons/0215_ニューラ.png'},
-  {id:225,name:'デリバード',img:'icons/0225_デリバード.png'},
-  {id:228,name:'デルビル',img:'icons/0228_デルビル.png'},
-  {id:243,name:'ライコウ',img:'icons/0243_ライコウ.png'},
-  {id:244,name:'エンテイ',img:'icons/0244_エンテイ.png'},
-  {id:245,name:'スイクン',img:'icons/0245_スイクン.png'},
-  {id:246,name:'ヨーギラス',img:'icons/0246_ヨーギラス.png'},
-  {id:252,name:'キモリ',img:'icons/0252_キモリ.png'},
-  {id:255,name:'アチャモ',img:'icons/0255_アチャモ.png'},
-  {id:258,name:'ミズゴロウ',img:'icons/0258_ミズゴロウ.png'},
-  {id:280,name:'ラルトス',img:'icons/0280_ラルトス.png'},
-  {id:287,name:'ナマケロ',img:'icons/0287_ナマケロ.png'},
-  {id:302,name:'ヤミラミ',img:'icons/0302_ヤミラミ.png'},
-  {id:303,name:'クチート',img:'icons/0303_クチート.png'},
-  {id:304,name:'ココドラ',img:'icons/0304_ココドラ.png'},
-  {id:311,name:'プラスル',img:'icons/0311_プラスル.png'},
-  {id:312,name:'マイナン',img:'icons/0312_マイナン.png'},
-  {id:316,name:'ゴクリン',img:'icons/0316_ゴクリン.png'},
-  {id:328,name:'ナックラー',img:'icons/0328_ナックラー.png'},
-  {id:333,name:'チルット',img:'icons/0333_チルット.png'},
-  {id:353,name:'カゲボウズ',img:'icons/0353_カゲボウズ.png'},
-  {id:359,name:'アブソル',img:'icons/0359_アブソル.png'},
-  {id:202,name:'ソーナンス',img:'icons/0202_ソーナンス.png'},
-  {id:363,name:'タマザラシ',img:'icons/0363_タマザラシ.png'},
-  {id:371,name:'タツベイ',img:'icons/0371_タツベイ.png'},
-  {id:380,name:'ラティアス',img:'icons/0380_ラティアス.png'},
-  {id:381,name:'ラティオス',img:'icons/0381_ラティオス.png'},
-  {id:403,name:'コリンク',img:'icons/0403_コリンク.png'},
-  {id:425,name:'フワンテ',img:'icons/0425_フワンテ.png'},
-  {id:185,name:'ウソッキー',img:'icons/0185_ウソッキー.png'},
-  {id:122,name:'バリヤード',img:'icons/0122_バリヤード.png'},
-  {id:113,name:'ラッキー',img:'icons/0113_ラッキー.png'},
-  {id:442,name:'ミカルゲ',img:'icons/0442_ミカルゲ.png'},
-  {id:448,name:'ルカリオ',img:'icons/0448_ルカリオ.png'},
-  {id:453,name:'グレッグル',img:'icons/0453_グレッグル.png'},
-  {id:459,name:'ユキカブリ',img:'icons/0459_ユキカブリ.png'},
-  {id:488,name:'クレセリア',img:'icons/0488_クレセリア.png'},
-  {id:491,name:'ダークライ',img:'icons/0491_ダークライ.png'},
-  {id:517,name:'ムンナ',img:'icons/0517_ムンナ.png'},
-  {id:557,name:'イシズマイ',img:'icons/0557_イシズマイ.png'},
-  {id:627,name:'ワシボン',img:'icons/0627_ワシボン.png'},
-  {id:696,name:'チゴラス',img:'icons/0696_チゴラス.png'},
-  {id:702,name:'デデンネ',img:'icons/0702_デデンネ.png'},
-  {id:710,name:'バケッチャ',img:'icons/0710_バケッチャ.png'},
-  {id:714,name:'オンバット',img:'icons/0714_オンバット.png'},
-  {id:736,name:'アゴジムシ',img:'icons/0736_アゴジムシ.png'},
-  {id:742,name:'アブリー',img:'icons/0742_アブリー.png'},
-  {id:759,name:'ヌイコグマ',img:'icons/0759_ヌイコグマ.png'},
-  {id:764,name:'キュワワー',img:'icons/0764_キュワワー.png'},
-  {id:777,name:'トゲデマル',img:'icons/0777_トゲデマル.png'},
-  {id:778,name:'ミミッキュ',img:'icons/0778_ミミッキュ.png'},
-  {id:780,name:'ジジーロン',img:'icons/0780_ジジーロン.png'},
-  {id:845,name:'ウッウ',img:'icons/0845_ウッウ.png'},
-  {id:848,name:'エレズン',img:'icons/0848_エレズン.png'},
-  {id:906,name:'ニャオハ',img:'icons/0906_ニャオハ.png'},
-  {id:909,name:'ホゲータ',img:'icons/0909_ホゲータ.png'},
-  {id:912,name:'クワッス',img:'icons/0912_クワッス.png'},
-  {id:921,name:'パモ',img:'icons/0921_パモ.png'},
-  {id:974,name:'アルクジラ',img:'icons/0974_アルクジラ.png'}
+  {id:1,name:'フシギダネ',img:'icons/0001.png'},
+  {id:4,name:'ヒトカゲ',img:'icons/0004.png'},
+  {id:7,name:'ゼニガメ',img:'icons/0007.png'},
+  {id:10,name:'キャタピー',img:'icons/0010.png'},
+  {id:19,name:'コラッタ',img:'icons/0019.png'},
+  {id:23,name:'アーボ',img:'icons/0023.png'},
+  {id:27,name:'サンド',img:'icons/0027.png'},
+  {id:37,name:'ロコン',img:'icons/0037.png'},
+  {id:50,name:'ディグダ',img:'icons/0050.png'},
+  {id:52,name:'ニャース',img:'icons/0052.png'},
+  {id:54,name:'コダック',img:'icons/0054.png'},
+  {id:56,name:'マンキー',img:'icons/0056.png'},
+  {id:58,name:'ガーディ',img:'icons/0058.png'},
+  {id:69,name:'マダツボミ',img:'icons/0069.png'},
+  {id:74,name:'イシツブテ',img:'icons/0074.png'},
+  {id:79,name:'ヤドン',img:'icons/0079.png'},
+  {id:81,name:'コイル',img:'icons/0081.png'},
+  {id:83,name:'カモネギ',img:'icons/0083.png'},
+  {id:84,name:'ドードー',img:'icons/0084.png'},
+  {id:92,name:'ゴース',img:'icons/0092.png'},
+  {id:95,name:'イワーク',img:'icons/0095.png'},
+  {id:104,name:'カラカラ',img:'icons/0104.png'},
+  {id:115,name:'ガルーラ',img:'icons/0115.png'},
+  {id:127,name:'カイロス',img:'icons/0127.png'},
+  {id:132,name:'メタモン',img:'icons/0132.png'},
+  {id:133,name:'イーブイ',img:'icons/0133.png'},
+  {id:147,name:'ミニリュウ',img:'icons/0147.png'},
+  {id:151,name:'ミュウ',img:'icons/0151.png'},
+  {id:152,name:'チコリータ',img:'icons/0152.png'},
+  {id:155,name:'ヒノアラシ',img:'icons/0155.png'},
+  {id:158,name:'ワニノコ',img:'icons/0158.png'},
+  {id:25,name:'ピカチュウ',img:'icons/0025.png'},
+  {id:35,name:'ピッピ',img:'icons/0035.png'},
+  {id:39,name:'プリン',img:'icons/0039.png'},
+  {id:175,name:'トゲピー',img:'icons/0175.png'},
+  {id:177,name:'ネイティ',img:'icons/0177.png'},
+  {id:179,name:'メリープ',img:'icons/0179.png'},
+  {id:194,name:'ウパー',img:'icons/0194.png'},
+  {id:198,name:'ヤミカラス',img:'icons/0198.png'},
+  {id:213,name:'ツボツボ',img:'icons/0213.png'},
+  {id:214,name:'ヘラクロス',img:'icons/0214.png'},
+  {id:215,name:'ニューラ',img:'icons/0215.png'},
+  {id:225,name:'デリバード',img:'icons/0225.png'},
+  {id:228,name:'デルビル',img:'icons/0228.png'},
+  {id:243,name:'ライコウ',img:'icons/0243.png'},
+  {id:244,name:'エンテイ',img:'icons/0244.png'},
+  {id:245,name:'スイクン',img:'icons/0245.png'},
+  {id:246,name:'ヨーギラス',img:'icons/0246.png'},
+  {id:252,name:'キモリ',img:'icons/0252.png'},
+  {id:255,name:'アチャモ',img:'icons/0255.png'},
+  {id:258,name:'ミズゴロウ',img:'icons/0258.png'},
+  {id:280,name:'ラルトス',img:'icons/0280.png'},
+  {id:287,name:'ナマケロ',img:'icons/0287.png'},
+  {id:302,name:'ヤミラミ',img:'icons/0302.png'},
+  {id:303,name:'クチート',img:'icons/0303.png'},
+  {id:304,name:'ココドラ',img:'icons/0304.png'},
+  {id:311,name:'プラスル',img:'icons/0311.png'},
+  {id:312,name:'マイナン',img:'icons/0312.png'},
+  {id:316,name:'ゴクリン',img:'icons/0316.png'},
+  {id:328,name:'ナックラー',img:'icons/0328.png'},
+  {id:333,name:'チルット',img:'icons/0333.png'},
+  {id:353,name:'カゲボウズ',img:'icons/0353.png'},
+  {id:359,name:'アブソル',img:'icons/0359.png'},
+  {id:202,name:'ソーナンス',img:'icons/0202.png'},
+  {id:363,name:'タマザラシ',img:'icons/0363.png'},
+  {id:371,name:'タツベイ',img:'icons/0371.png'},
+  {id:380,name:'ラティアス',img:'icons/0380.png'},
+  {id:381,name:'ラティオス',img:'icons/0381.png'},
+  {id:403,name:'コリンク',img:'icons/0403.png'},
+  {id:425,name:'フワンテ',img:'icons/0425.png'},
+  {id:185,name:'ウソッキー',img:'icons/0185.png'},
+  {id:122,name:'バリヤード',img:'icons/0122.png'},
+  {id:113,name:'ラッキー',img:'icons/0113.png'},
+  {id:442,name:'ミカルゲ',img:'icons/0442.png'},
+  {id:448,name:'ルカリオ',img:'icons/0448.png'},
+  {id:453,name:'グレッグル',img:'icons/0453.png'},
+  {id:459,name:'ユキカブリ',img:'icons/0459.png'},
+  {id:488,name:'クレセリア',img:'icons/0488.png'},
+  {id:491,name:'ダークライ',img:'icons/0491.png'},
+  {id:517,name:'ムンナ',img:'icons/0517.png'},
+  {id:557,name:'イシズマイ',img:'icons/0557.png'},
+  {id:627,name:'ワシボン',img:'icons/0627.png'},
+  {id:696,name:'チゴラス',img:'icons/0696.png'},
+  {id:702,name:'デデンネ',img:'icons/0702.png'},
+  {id:710,name:'バケッチャ',img:'icons/0710.png'},
+  {id:714,name:'オンバット',img:'icons/0714.png'},
+  {id:736,name:'アゴジムシ',img:'icons/0736.png'},
+  {id:742,name:'アブリー',img:'icons/0742.png'},
+  {id:759,name:'ヌイコグマ',img:'icons/0759.png'},
+  {id:764,name:'キュワワー',img:'icons/0764.png'},
+  {id:777,name:'トゲデマル',img:'icons/0777.png'},
+  {id:778,name:'ミミッキュ',img:'icons/0778.png'},
+  {id:780,name:'ジジーロン',img:'icons/0780.png'},
+  {id:845,name:'ウッウ',img:'icons/0845.png'},
+  {id:848,name:'エレズン',img:'icons/0848.png'},
+  {id:906,name:'ニャオハ',img:'icons/0906.png'},
+  {id:909,name:'ホゲータ',img:'icons/0909.png'},
+  {id:912,name:'クワッス',img:'icons/0912.png'},
+  {id:921,name:'パモ',img:'icons/0921.png'},
+  {id:974,name:'アルクジラ',img:'icons/0974.png'}
 ];
 
 function shuffle(arr) {
