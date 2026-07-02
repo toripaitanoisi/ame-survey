@@ -504,6 +504,13 @@ function resetAndStart() {
   showPokemon(0);
 }
 
+function preloadImages(idx) {
+  for(let i = 1; i <= 3; i++) {
+    const next = shuffled[idx + i];
+    if(next) { const img = new Image(); img.src = next.img; }
+  }
+}
+
 function showPokemon(idx) {
   const p = shuffled[idx];
 
@@ -514,6 +521,9 @@ function showPokemon(idx) {
   fallbackEl.style.display = 'none';
   iconEl.src = p.img;
   iconEl.alt = p.name;
+
+  // 次3枚を先読み
+  preloadImages(idx);
 
   document.getElementById('pokemon-name').textContent = p.name;
 
