@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>ポケモンスリープ 需要アンケート</title>
+<title>飴アンケート</title>
 <style>
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -16,6 +16,8 @@
     --green: #3b7c2a;
     --green-light: #e8f5e0;
     --accent: #5a9e45;
+    --blue: #2a6aad;
+    --blue-light: #e6f0fb;
   }
 
   body {
@@ -123,9 +125,9 @@
   .choice-btn:hover { border-color: var(--accent); background: var(--green-light); }
   .choice-btn:active { transform: scale(0.98); }
   .choice-btn.selected {
-    border-color: var(--green);
-    background: var(--green-light);
-    color: var(--green);
+    border-color: var(--blue);
+    background: var(--blue-light);
+    color: var(--blue);
   }
   /* A: スケールポン */
   .choice-btn.pop {
@@ -168,17 +170,68 @@
   .nav-btn:hover { color: var(--text); }
   .nav-btn:disabled { opacity: 0.3; cursor: default; }
 
-  /* 送信ボタン */
-  .submit-btn {
+  /* 送信ボタン（非表示・ポップアップで代替） */
+  .submit-btn { display: none; }
+
+  /* 送信ポップアップ */
+  .submit-popup {
+    position: fixed; inset: 0; background: rgba(30,28,24,0.5);
+    display: none; align-items: flex-end; justify-content: center;
+    z-index: 200; padding-bottom: env(safe-area-inset-bottom);
+  }
+  .submit-popup.visible { display: flex; }
+  .submit-popup-inner {
+    background: var(--surface);
+    border-radius: 24px 24px 0 0;
+    padding: 2rem 1.5rem 2.5rem;
+    width: 100%; max-width: 480px;
+    text-align: center;
+    animation: popup-slide-up 0.3s cubic-bezier(0.34,1.2,0.64,1);
+  }
+  @keyframes popup-slide-up {
+    0%   { transform: translateY(100%); }
+    100% { transform: translateY(0); }
+  }
+  .submit-popup-icon { font-size: 40px; margin-bottom: 0.5rem; }
+  .submit-popup-title { font-size: 18px; font-weight: 800; color: var(--text); margin-bottom: 0.5rem; }
+  .submit-popup-note { font-size: 13px; color: var(--text-sub); margin-bottom: 1.25rem; line-height: 1.6; }
+  .submit-popup-btn {
     width: 100%; padding: 16px;
     border-radius: 12px; border: none;
     background: var(--green); color: #fff;
     font-family: inherit; font-size: 16px; font-weight: 700;
-    cursor: pointer; transition: all 0.15s;
-    margin-top: 1rem; display: none;
+    cursor: pointer; transition: background 0.15s;
   }
-  .submit-btn:hover { background: #2d6020; }
-  .submit-btn.visible { display: block; }
+  .submit-popup-btn:hover { background: #2d6020; }
+  .submit-popup-close {
+    position: absolute; top: 1rem; right: 1rem;
+    width: 32px; height: 32px; border-radius: 50%;
+    border: none; background: var(--border);
+    font-size: 16px; cursor: pointer; color: var(--text-sub);
+    display: flex; align-items: center; justify-content: center;
+    transition: background 0.15s;
+  }
+  .submit-popup-close:hover { background: #d8d4cc; }
+  .submit-popup-inner { position: relative; }
+
+  /* 表紙 */
+  .cover-screen {
+    display: flex; flex-direction: column; align-items: center;
+    padding: 2.5rem 1rem 2rem; gap: 1rem; text-align: center;
+  }
+  .cover-screen.hidden { display: none; }
+  .cover-icon { font-size: 52px; }
+  .cover-title { font-size: 22px; font-weight: 800; color: var(--green); line-height: 1.3; }
+  .cover-desc { font-size: 14px; color: var(--text-sub); line-height: 1.8; }
+  .cover-start-btn {
+    margin-top: 0.5rem;
+    width: 100%; max-width: 320px;
+    padding: 16px; border-radius: 12px; border: none;
+    background: var(--green); color: #fff;
+    font-family: inherit; font-size: 16px; font-weight: 700;
+    cursor: pointer; transition: background 0.15s;
+  }
+  .cover-start-btn:hover { background: #2d6020; }
 
   /* 完了画面 */
   .done-screen {
@@ -268,10 +321,18 @@
 <body>
 
 <header>
-  <h1>ポケモンスリープ 需要アンケート</h1>
+  <h1>飴アンケート</h1>
 </header>
 
 <div class="container" id="main-container">
+
+  <!-- 表紙 -->
+  <div class="cover-screen" id="cover-screen">
+    <div class="cover-icon">🍬</div>
+    <div class="cover-title">ポケモンスリープ<br>飴需要アンケート</div>
+    <div class="cover-desc">各ポケモンの飴が送られてきた場合の<br>あなたの感覚を教えてください。<br><br>途中で回答を停止しても回答は保存され、<br>再開可能です。<br><br>選択肢はランダムな順番で表示されます。</div>
+    <button class="cover-start-btn" onclick="startSurvey()">回答をはじめる →</button>
+  </div>
 
   <!-- 送信済み画面 -->
   <div class="already-done" id="already-done">
@@ -326,6 +387,17 @@
 
 </div>
 
+<!-- 送信ポップアップ -->
+<div class="submit-popup" id="submit-popup">
+  <div class="submit-popup-inner">
+    <button class="submit-popup-close" onclick="document.getElementById('submit-popup').classList.remove('visible')">✕</button>
+    <div class="submit-popup-icon">📩</div>
+    <div class="submit-popup-title">回答を送信しますか？</div>
+    <div class="submit-popup-note">送信には少し時間がかかる場合があります。<br>送信中はページを閉じないでください。</div>
+    <button class="submit-popup-btn" onclick="submitAll()">送信する</button>
+  </div>
+</div>
+
 <!-- 送信中オーバーレイ -->
 <div class="sending-overlay" id="sending-overlay">
   <div class="spinner"></div>
@@ -337,6 +409,7 @@ const GAS_URL = 'https://script.google.com/macros/s/AKfycbx45Ab0Npm57ZPBHd7pdKvq
 const STORAGE_KEY = 'ame_survey_2026_done';
 const STORAGE_ANSWERS_KEY = 'ame_survey_2026_answers';
 const STORAGE_ORDER_KEY = 'ame_survey_2026_order';
+const STORAGE_CURRENT_KEY = 'ame_survey_2026_current';
 
 const SCORES = [7, 3, 0, -3, -7];
 const LABELS = ['もっと欲しい（集めてる）', '嬉しい', 'どちらでもいい', '許せるが欲しくはない', '送ってほしくない'];
@@ -475,33 +548,62 @@ if(savedAnswers) {
   try { answers = JSON.parse(savedAnswers); } catch(e) {}
 }
 
+// 前回の進行位置を復元
+const savedCurrent = localStorage.getItem(STORAGE_CURRENT_KEY);
+if(savedCurrent) {
+  try { current = Math.min(parseInt(savedCurrent), shuffled.length - 1); } catch(e) {}
+}
+
+function hideSurvey() {
+  document.getElementById('progress-wrap').style.display = 'none';
+  document.getElementById('pokemon-card').style.display = 'none';
+  document.getElementById('choices').style.display = 'none';
+  document.getElementById('nav-row').style.display = 'none';
+}
+
+function showSurvey() {
+  document.getElementById('progress-wrap').style.display = '';
+  document.getElementById('pokemon-card').style.display = '';
+  document.getElementById('choices').style.display = '';
+  document.getElementById('nav-row').style.display = '';
+}
+
+function startSurvey() {
+  document.getElementById('cover-screen').classList.add('hidden');
+  showSurvey();
+  showPokemon(current);
+}
+
 function init() {
+  hideSurvey();
+
   // 送信済みチェック
   if(localStorage.getItem(STORAGE_KEY) === 'done') {
+    document.getElementById('cover-screen').classList.add('hidden');
     document.getElementById('already-done').classList.add('visible');
-    document.getElementById('progress-wrap').style.display = 'none';
-    document.getElementById('pokemon-card').style.display = 'none';
-    document.getElementById('choices').style.display = 'none';
-    document.getElementById('nav-row').style.display = 'none';
     return;
   }
-  showPokemon(current);
+
+  // 続きがあればボタンテキストを変える
+  const hasSaved = localStorage.getItem(STORAGE_CURRENT_KEY);
+  if(hasSaved && parseInt(hasSaved) > 0) {
+    document.querySelector('.cover-start-btn').textContent = '続きから回答する →';
+  }
 }
 
 function resetAndStart() {
   localStorage.removeItem(STORAGE_KEY);
   localStorage.removeItem(STORAGE_ANSWERS_KEY);
   localStorage.removeItem(STORAGE_ORDER_KEY);
+  localStorage.removeItem(STORAGE_CURRENT_KEY);
   shuffled = shuffle(pokemon);
   localStorage.setItem(STORAGE_ORDER_KEY, JSON.stringify(shuffled.map(p => p.id)));
   answers = {};
   current = 0;
   document.getElementById('already-done').classList.remove('visible');
-  document.getElementById('progress-wrap').style.display = '';
-  document.getElementById('pokemon-card').style.display = '';
-  document.getElementById('choices').style.display = '';
-  document.getElementById('nav-row').style.display = '';
-  showPokemon(0);
+  document.getElementById('cover-screen').classList.remove('hidden');
+  document.querySelector('.cover-start-btn').textContent = '回答をはじめる →';
+  hideSurvey();
 }
 
 function preloadImages(idx) {
@@ -541,12 +643,13 @@ function showPokemon(idx) {
 
   const isLast = (idx === shuffled.length - 1);
   document.getElementById('btn-skip').style.display = isLast ? 'none' : '';
-  document.getElementById('submit-btn').classList.toggle('visible', isLast);
+  if(isLast) document.getElementById('submit-popup').classList.add('visible'); else document.getElementById('submit-popup').classList.remove('visible');
 }
 
 function answer(choiceIdx) {
   answers[current] = choiceIdx;
   localStorage.setItem(STORAGE_ANSWERS_KEY, JSON.stringify(answers));
+  localStorage.setItem(STORAGE_CURRENT_KEY, current);
 
   const btns = document.querySelectorAll('.choice-btn');
 
@@ -600,7 +703,7 @@ function answer(choiceIdx) {
         });
       } else {
         card.classList.remove('slide-out');
-        document.getElementById('submit-btn').classList.add('visible');
+        document.getElementById('submit-popup').classList.add('visible');
       }
     }, 150);
   }, 250);
@@ -609,6 +712,7 @@ function answer(choiceIdx) {
 function skip() {
   if(current < shuffled.length - 1) {
     current++;
+    localStorage.setItem(STORAGE_CURRENT_KEY, current);
     showPokemon(current);
   }
 }
@@ -616,6 +720,7 @@ function skip() {
 function goBack() {
   if(current > 0) {
     current--;
+    localStorage.setItem(STORAGE_CURRENT_KEY, current);
     showPokemon(current);
   }
 }
@@ -636,6 +741,7 @@ async function submitAll() {
     return;
   }
 
+  document.getElementById('submit-popup').classList.remove('visible');
   const overlay = document.getElementById('sending-overlay');
   overlay.classList.add('visible');
 
