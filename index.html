@@ -572,10 +572,12 @@ function answer(choiceIdx) {
 
       if(current < shuffled.length - 1) {
         current++;
+        // まず非表示状態にしてから内容を更新
         card.classList.remove('slide-out');
         card.classList.add('slide-in');
-        showPokemon(current);
+        // slide-inでopacity:0になってから内容を更新
         requestAnimationFrame(() => {
+          showPokemon(current);
           requestAnimationFrame(() => {
             card.classList.remove('slide-in');
             card.classList.add('slide-in-active');
