@@ -582,11 +582,15 @@ function answer(choiceIdx) {
 
       if(current < shuffled.length - 1) {
         current++;
-        // まず非表示状態にしてから内容を更新
         card.classList.remove('slide-out');
         card.classList.add('slide-in');
-        // slide-inでopacity:0になってから内容を更新
         requestAnimationFrame(() => {
+          // 非表示になってから内容更新＆ボタンリセット
+          btns.forEach(b => {
+            b.classList.remove('pop', 'selected');
+            const old = b.querySelector('.check-pop');
+            if(old) old.remove();
+          });
           showPokemon(current);
           requestAnimationFrame(() => {
             card.classList.remove('slide-in');
