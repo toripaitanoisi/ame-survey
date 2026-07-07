@@ -283,6 +283,50 @@
     animation: done-title-in 0.5s ease 0.4s both;
   }
 
+  /* 課金属性画面 */
+  .charge-screen {
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    width: 100%;
+    gap: 1.5rem;
+    padding-bottom: 1rem;
+  }
+  .charge-screen.visible { display: flex; }
+  .charge-page { display: none; flex-direction: column; gap: 1.5rem; width: 100%; animation: charge-fadein 0.2s ease; }
+  .charge-page.visible { display: flex; }
+  @keyframes charge-fadein { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+  .charge-note { font-size: 11px; color: var(--text-sub); line-height: 1.7; padding: 10px 14px; background: rgba(255,255,255,0.6); border-radius: 12px; }
+  .charge-note-lead { font-size: 13px; font-weight: 600; color: var(--text); display: block; margin-bottom: 6px; }
+  .charge-section { display: flex; flex-direction: column; gap: 8px; }
+  .charge-section-title { font-size: 13px; font-weight: 700; color: var(--text); padding: 0 2px; }
+  .charge-choices { display: flex; flex-direction: column; gap: 5px; }
+  .charge-btn {
+    width: 100%; padding: 13px 14px;
+    border-radius: 10px; border: none;
+    background: var(--surface);
+    font-family: inherit; font-size: 13px; font-weight: 500; color: var(--text);
+    cursor: pointer; text-align: left; transition: all 0.15s;
+    -webkit-tap-highlight-color: transparent;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+  }
+  .charge-btn:hover { background: var(--green-light); color: var(--green); }
+  .charge-btn.selected { background: var(--blue-light); color: var(--blue); font-weight: 700; }
+  .charge-input {
+    width: 100%; padding: 13px 14px; border-radius: 10px; border: none;
+    background: var(--surface); font-family: inherit; font-size: 14px;
+    color: var(--text); outline: none; box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+  }
+  .charge-input-note { font-size: 11px; color: var(--text-sub); padding: 0 2px; }
+  .charge-next-btn {
+    width: 100%; padding: 15px; border-radius: 12px; border: none;
+    background: var(--green); color: #fff; font-family: inherit;
+    font-size: 15px; font-weight: 700; cursor: pointer; transition: background 0.15s;
+  }
+  .charge-next-btn:hover { background: #2d6020; }
+  .charge-back-link { font-size: 12px; color: var(--text-sub); background: none; border: none; cursor: pointer; padding: 4px 8px; text-align: center; width: 100%; font-family: inherit; }
+  .charge-skip-all { font-size: 12px; color: var(--text-sub); background: none; border: none; cursor: pointer; padding: 4px 8px; text-align: center; width: 100%; font-family: inherit; }
+
   /* ローディング */
   .sending-overlay {
     position: fixed; inset: 0; background: rgba(250,249,246,0.92);
@@ -344,6 +388,77 @@
     <div class="already-done-title">回答済みです</div>
     <div class="already-done-sub">このブラウザからはすでに回答が送信されています。<br>もう一度回答したい場合は下のボタンを押してください。</div>
     <button class="retry-btn" onclick="resetAndStart()">もう一度回答する</button>
+  </div>
+
+  <!-- 課金属性画面 -->
+  <div class="charge-screen" id="charge-screen">
+    <div class="charge-note">
+      <span class="charge-note-lead">アンケートおつかれさまでした。あと2ページだけ。</span>
+      いずれ属性別になにかが出せるかもしれないし出せないかもしれないアンケートです。どれか悩んだら自認で・なんとなくで選択してOKです。スキップしてもOKです。回答時間と回答結果以外の個人情報は収集していません。
+    </div>
+
+    <!-- ページ1 -->
+    <div class="charge-page visible" id="charge-page-1">
+      <div class="charge-section">
+        <div class="charge-section-title">💰 毎月のおおよその課金額</div>
+        <div class="charge-choices">
+          <button class="charge-btn" onclick="selectChargeItem('amount',0,this)">無課金</button>
+          <button class="charge-btn" onclick="selectChargeItem('amount',1,this)">プレパスのみ</button>
+          <button class="charge-btn" onclick="selectChargeItem('amount',2,this)">プレパス＋たまにパック</button>
+          <button class="charge-btn" onclick="selectChargeItem('amount',3,this)">〜5,000円</button>
+          <button class="charge-btn" onclick="selectChargeItem('amount',4,this)">〜10,000円</button>
+          <button class="charge-btn" onclick="selectChargeItem('amount',5,this)">〜20,000円</button>
+          <button class="charge-btn" onclick="selectChargeItem('amount',6,this)">〜30,000円</button>
+          <button class="charge-btn" onclick="selectChargeItem('amount',7,this)">〜50,000円</button>
+          <button class="charge-btn" onclick="selectChargeItem('amount',8,this)">50,000円〜</button>
+        </div>
+      </div>
+      <div class="charge-section">
+        <div class="charge-section-title">📅 ポケスリ歴</div>
+        <div class="charge-choices">
+          <button class="charge-btn" onclick="selectChargeItem('history',0,this)">初期勢</button>
+          <button class="charge-btn" onclick="selectChargeItem('history',1,this)">2年ほど</button>
+          <button class="charge-btn" onclick="selectChargeItem('history',2,this)">開始1年以内</button>
+        </div>
+      </div>
+      <div class="charge-section">
+        <div class="charge-section-title">🐾 仲間にしたポケモン数</div>
+        <input class="charge-input" type="number" id="charge-pokemon-count" placeholder="例：2400" min="0" max="99900" step="100" oninput="saveChargeInput()">
+        <div class="charge-input-note">最後の2桁を00にして入力してください（例：2438→2400）</div>
+      </div>
+      <button class="charge-next-btn" onclick="goChargePage2()">次へ →</button>
+      <button class="charge-skip-all" onclick="finishCharge()">全部スキップして完了する</button>
+    </div>
+
+    <!-- ページ2 -->
+    <div class="charge-page" id="charge-page-2">
+      <div class="charge-section">
+        <div class="charge-section-title">🎁 限定パック</div>
+        <div class="charge-choices">
+          <button class="charge-btn" onclick="selectChargeItem('limited',0,this)">ほぼ買わない</button>
+          <button class="charge-btn" onclick="selectChargeItem('limited',1,this)">お得なやつは買う</button>
+          <button class="charge-btn" onclick="selectChargeItem('limited',2,this)">だいたい全買い</button>
+        </div>
+      </div>
+      <div class="charge-section">
+        <div class="charge-section-title">🛒 常設パック</div>
+        <div class="charge-choices">
+          <button class="charge-btn" onclick="selectChargeItem('regular',0,this)">買わない</button>
+          <button class="charge-btn" onclick="selectChargeItem('regular',1,this)">おまけ付き3回だけ買う</button>
+          <button class="charge-btn" onclick="selectChargeItem('regular',2,this)">おまけなくなっても買う</button>
+        </div>
+      </div>
+      <div class="charge-section">
+        <div class="charge-section-title">🍪 ハイパーサブレ</div>
+        <div class="charge-choices">
+          <button class="charge-btn" onclick="selectChargeItem('hyper',0,this)">買わない</button>
+          <button class="charge-btn" onclick="selectChargeItem('hyper',1,this)">たまに買う</button>
+          <button class="charge-btn" onclick="selectChargeItem('hyper',2,this)">全買い</button>
+        </div>
+      </div>
+      <button class="charge-next-btn" onclick="finishCharge()">完了する ✓</button>
+      <button class="charge-back-link" onclick="goChargePage1()">← 前のページに戻る</button>
+    </div>
   </div>
 
   <!-- 進捗 -->
@@ -415,6 +530,7 @@ const STORAGE_KEY = 'ame_survey_2026_done';
 const STORAGE_ANSWERS_KEY = 'ame_survey_2026_answers';
 const STORAGE_ORDER_KEY = 'ame_survey_2026_order';
 const STORAGE_CURRENT_KEY = 'ame_survey_2026_current';
+const STORAGE_CHARGE_KEY = 'ame_survey_2026_charge';
 
 const SCORES = [7, 3, 0, -3, -7];
 const LABELS = ['もっと欲しい（集めてる）', '嬉しい', 'どちらでもいい', '許せるが欲しくはない', '送ってほしくない'];
@@ -573,10 +689,50 @@ function showSurvey() {
   document.getElementById('nav-row').style.display = '';
 }
 
+// 課金属性の回答
+const chargeData = { amount: null, history: null, pokemonCount: null, limited: null, regular: null, hyper: null };
+
 function startSurvey() {
   document.getElementById('cover-screen').classList.add('hidden');
   showSurvey();
   showPokemon(current);
+}
+
+function selectChargeItem(key, idx, btn) {
+  const parent = btn.closest('.charge-choices') || btn.parentElement;
+  parent.querySelectorAll('.charge-btn').forEach(b => b.classList.remove('selected'));
+  btn.classList.add('selected');
+  chargeData[key] = btn.textContent.trim();
+}
+
+function saveChargeInput() {
+  chargeData.pokemonCount = document.getElementById('charge-pokemon-count').value || null;
+}
+
+function goChargePage1() {
+  document.getElementById('charge-page-2').classList.remove('visible');
+  document.getElementById('charge-page-1').classList.add('visible');
+}
+
+function goChargePage2() {
+  document.getElementById('charge-page-1').classList.remove('visible');
+  document.getElementById('charge-page-2').classList.add('visible');
+}
+
+function finishCharge() {
+  chargeData.pokemonCount = document.getElementById('charge-pokemon-count').value || null;
+  localStorage.setItem(STORAGE_CHARGE_KEY, JSON.stringify(chargeData));
+  document.getElementById('charge-screen').classList.remove('visible');
+  document.querySelector('header h1').textContent = '飴アンケート';
+  document.body.style.background = '';
+  showDoneScreen();
+}
+
+function showDoneScreen(count) {
+  const done = document.getElementById('done-screen');
+  done.classList.add('visible');
+  const cnt = count || parseInt(document.getElementById('done-count').textContent) || 0;
+  document.getElementById('done-count').textContent = cnt ? `${cnt}匹分の回答を送信しました` : '';
 }
 
 function init() {
@@ -601,6 +757,8 @@ function resetAndStart() {
   localStorage.removeItem(STORAGE_ANSWERS_KEY);
   localStorage.removeItem(STORAGE_ORDER_KEY);
   localStorage.removeItem(STORAGE_CURRENT_KEY);
+  localStorage.removeItem(STORAGE_CHARGE_KEY);
+  chargeAnswer = null;
   shuffled = shuffle(pokemon);
   localStorage.setItem(STORAGE_ORDER_KEY, JSON.stringify(shuffled.map(p => p.id)));
   answers = {};
@@ -755,7 +913,7 @@ async function submitAll() {
       method: 'POST',
       mode: 'no-cors',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ answers: answered })
+      body: JSON.stringify({ answers: answered, charge: (function(){ try{ return JSON.parse(localStorage.getItem(STORAGE_CHARGE_KEY)) || {}; }catch(e){ return {}; } })() })
     });
 
     // 送信済みフラグをローカルに保存
