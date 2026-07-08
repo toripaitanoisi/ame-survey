@@ -719,12 +719,36 @@ function goChargePage2() {
   document.getElementById('charge-page-2').classList.add('visible');
 }
 
-function finishCharge() {
+async function sendChargeData() {
+  // 全項目未回答（スキップ）なら送信自体をスキップ
+  const hasAnyData = chargeData.amount || chargeData.history || chargeData.pokemonCount || chargeData.limited || chargeData.regular || chargeData.hyper;
+  if(!hasAnyData) return;
+
+  try {
+    await fetch(GAS_URL, {
+      method: 'POST',
+      mode: 'no-cors',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'charge', charge: chargeData })
+    });
+  } catch(err) {
+    // 課金属性アンケートは軽い付随データのため、送信に失敗しても完了画面へは進める
+    console.error('課金属性データの送信に失敗しました:', err);
+  }
+}
+
+async function finishCharge() {
   chargeData.pokemonCount = document.getElementById('charge-pokemon-count').value || null;
   localStorage.setItem(STORAGE_CHARGE_KEY, JSON.stringify(chargeData));
   document.getElementById('charge-screen').classList.remove('visible');
   document.querySelector('header h1').textContent = '飴アンケート';
   document.body.style.background = '';
+
+  const overlay = document.getElementById('sending-overlay');
+  overlay.classList.add('visible');
+  await sendChargeData();
+  overlay.classList.remove('visible');
+
   showDoneScreen();
 }
 
@@ -913,7 +937,7 @@ async function submitAll() {
       method: 'POST',
       mode: 'no-cors',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ answers: answered, charge: (function(){ try{ return JSON.parse(localStorage.getItem(STORAGE_CHARGE_KEY)) || {}; }catch(e){ return {}; } })() })
+      body: JSON.stringify({ action: 'answers', answers: answered })
     });
 
     // 送信済みフラグをローカルに保存
@@ -927,9 +951,15 @@ async function submitAll() {
     document.getElementById('nav-row').style.display = 'none';
     document.getElementById('submit-btn').style.display = 'none';
     document.getElementById('progress-wrap').style.display = 'none';
-    const done = document.getElementById('done-screen');
-    done.classList.add('visible');
     document.getElementById('done-count').textContent = `${answered.length}匹分の回答を送信しました`;
+
+    // 課金属性未回答なら課金画面へ、回答済みなら完了画面へ
+    const savedCharge = localStorage.getItem(STORAGE_CHARGE_KEY);
+    if(!savedCharge) {
+      document.getElementById('charge-screen').classList.add('visible');
+    } else {
+      showDoneScreen();
+    }
 
   } catch(err) {
     overlay.classList.remove('visible');
