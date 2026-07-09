@@ -170,50 +170,6 @@
   .nav-btn:hover { color: var(--text); }
   .nav-btn:disabled { opacity: 0.3; cursor: default; }
 
-  /* 送信ボタン（非表示・ポップアップで代替） */
-  .submit-btn { display: none; }
-
-  /* 送信ポップアップ */
-  .submit-popup {
-    position: fixed; inset: 0; background: rgba(30,28,24,0.5);
-    display: none; align-items: flex-end; justify-content: center;
-    z-index: 200; padding-bottom: env(safe-area-inset-bottom);
-  }
-  .submit-popup.visible { display: flex; }
-  .submit-popup-inner {
-    background: var(--surface);
-    border-radius: 24px 24px 0 0;
-    padding: 2rem 1.5rem 2.5rem;
-    width: 100%; max-width: 480px;
-    text-align: center;
-    animation: popup-slide-up 0.3s cubic-bezier(0.34,1.2,0.64,1);
-  }
-  @keyframes popup-slide-up {
-    0%   { transform: translateY(100%); }
-    100% { transform: translateY(0); }
-  }
-  .submit-popup-icon { font-size: 40px; margin-bottom: 0.5rem; }
-  .submit-popup-title { font-size: 18px; font-weight: 800; color: var(--text); margin-bottom: 0.5rem; }
-  .submit-popup-note { font-size: 13px; color: var(--text-sub); margin-bottom: 1.25rem; line-height: 1.6; }
-  .submit-popup-btn {
-    width: 100%; padding: 16px;
-    border-radius: 12px; border: none;
-    background: var(--green); color: #fff;
-    font-family: inherit; font-size: 16px; font-weight: 700;
-    cursor: pointer; transition: background 0.15s;
-  }
-  .submit-popup-btn:hover { background: #2d6020; }
-  .submit-popup-close {
-    position: absolute; top: 1rem; right: 1rem;
-    width: 32px; height: 32px; border-radius: 50%;
-    border: none; background: var(--border);
-    font-size: 16px; cursor: pointer; color: var(--text-sub);
-    display: flex; align-items: center; justify-content: center;
-    transition: background 0.15s;
-  }
-  .submit-popup-close:hover { background: #d8d4cc; }
-  .submit-popup-inner { position: relative; }
-
   /* 表紙 */
   .cover-screen {
     display: flex; flex-direction: column; align-items: center;
@@ -493,8 +449,6 @@
     <button class="nav-btn" id="btn-skip" onclick="skip()">スキップ →</button>
   </div>
 
-  <button class="submit-btn" id="submit-btn" onclick="submitAll()">📩 回答を送信する</button>
-
   <!-- 完了画面 -->
   <div class="done-screen" id="done-screen">
     <div class="done-icon">🎉</div>
@@ -504,17 +458,6 @@
     <div class="done-count" id="done-count"></div>
   </div>
 
-</div>
-
-<!-- 送信ポップアップ -->
-<div class="submit-popup" id="submit-popup">
-  <div class="submit-popup-inner">
-    <button class="submit-popup-close" onclick="document.getElementById('submit-popup').classList.remove('visible')">✕</button>
-    <div class="submit-popup-icon">📩</div>
-    <div class="submit-popup-title">回答を送信しますか？</div>
-    <div class="submit-popup-note">送信には少し時間がかかる場合があります。<br>送信中はページを閉じないでください。</div>
-    <button class="submit-popup-btn" onclick="submitAll()">送信する</button>
-  </div>
 </div>
 
 <!-- 送信中オーバーレイ -->
@@ -842,7 +785,6 @@ function showPokemon(idx) {
 
   const isLast = (idx === shuffled.length - 1);
   document.getElementById('btn-skip').style.display = isLast ? 'none' : '';
-  if(isLast) document.getElementById('submit-popup').classList.add('visible'); else document.getElementById('submit-popup').classList.remove('visible');
 }
 
 function answer(choiceIdx) {
@@ -902,7 +844,7 @@ function answer(choiceIdx) {
         });
       } else {
         card.classList.remove('slide-out');
-        document.getElementById('submit-popup').classList.add('visible');
+        submitAll();
       }
     }, 150);
   }, 250);
@@ -932,12 +874,9 @@ function submitAll() {
     return;
   }
 
-  document.getElementById('submit-popup').classList.remove('visible');
-
   document.getElementById('pokemon-card').style.display = 'none';
   document.getElementById('choices').style.display = 'none';
   document.getElementById('nav-row').style.display = 'none';
-  document.getElementById('submit-btn').style.display = 'none';
   document.getElementById('progress-wrap').style.display = 'none';
 
   // 飴アンケートと課金属性アンケートをまとめて1回で送信するため、
