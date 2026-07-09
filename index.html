@@ -170,6 +170,47 @@
   .nav-btn:hover { color: var(--text); }
   .nav-btn:disabled { opacity: 0.3; cursor: default; }
 
+  /* 送信確認ポップアップ */
+  .final-submit-popup {
+    position: fixed; inset: 0; background: rgba(30,28,24,0.5);
+    display: none; align-items: flex-end; justify-content: center;
+    z-index: 200; padding-bottom: env(safe-area-inset-bottom);
+  }
+  .final-submit-popup.visible { display: flex; }
+  .final-submit-popup-inner {
+    background: var(--surface);
+    border-radius: 24px 24px 0 0;
+    padding: 2rem 1.5rem 2.5rem;
+    width: 100%; max-width: 480px;
+    text-align: center;
+    position: relative;
+    animation: popup-slide-up 0.3s cubic-bezier(0.34,1.2,0.64,1);
+  }
+  @keyframes popup-slide-up {
+    0%   { transform: translateY(100%); }
+    100% { transform: translateY(0); }
+  }
+  .final-submit-popup-icon { font-size: 40px; margin-bottom: 0.5rem; }
+  .final-submit-popup-title { font-size: 18px; font-weight: 800; color: var(--text); margin-bottom: 0.5rem; }
+  .final-submit-popup-note { font-size: 13px; color: var(--text-sub); margin-bottom: 1.25rem; line-height: 1.6; }
+  .final-submit-popup-btn {
+    width: 100%; padding: 16px;
+    border-radius: 12px; border: none;
+    background: var(--green); color: #fff;
+    font-family: inherit; font-size: 16px; font-weight: 700;
+    cursor: pointer; transition: background 0.15s;
+  }
+  .final-submit-popup-btn:hover { background: #2d6020; }
+  .final-submit-popup-close {
+    position: absolute; top: 1rem; right: 1rem;
+    width: 32px; height: 32px; border-radius: 50%;
+    border: none; background: var(--border);
+    font-size: 16px; cursor: pointer; color: var(--text-sub);
+    display: flex; align-items: center; justify-content: center;
+    transition: background 0.15s;
+  }
+  .final-submit-popup-close:hover { background: #d8d4cc; }
+
   /* 表紙 */
   .cover-screen {
     display: flex; flex-direction: column; align-items: center;
@@ -383,7 +424,7 @@
         <div class="charge-input-note">最後の2桁を00にして入力してください（例：2438→2400）</div>
       </div>
       <button class="charge-next-btn" onclick="goChargePage2()">次へ →</button>
-      <button class="charge-skip-all" onclick="finishCharge()">全部スキップして完了する</button>
+      <button class="charge-skip-all" onclick="showFinalSubmitPopup()">全部スキップして完了する</button>
     </div>
 
     <!-- ページ2 -->
@@ -412,7 +453,7 @@
           <button class="charge-btn" onclick="selectChargeItem('hyper',2,this)">全買い</button>
         </div>
       </div>
-      <button class="charge-next-btn" onclick="finishCharge()">完了する ✓</button>
+      <button class="charge-next-btn" onclick="showFinalSubmitPopup()">完了する ✓</button>
       <button class="charge-back-link" onclick="goChargePage1()">← 前のページに戻る</button>
     </div>
   </div>
@@ -458,6 +499,17 @@
     <div class="done-count" id="done-count"></div>
   </div>
 
+</div>
+
+<!-- 送信確認ポップアップ -->
+<div class="final-submit-popup" id="final-submit-popup">
+  <div class="final-submit-popup-inner">
+    <button class="final-submit-popup-close" onclick="document.getElementById('final-submit-popup').classList.remove('visible')">✕</button>
+    <div class="final-submit-popup-icon">📩</div>
+    <div class="final-submit-popup-title">回答を送信しますか？</div>
+    <div class="final-submit-popup-note">送信には少し時間がかかる場合があります。<br>送信中はページを閉じないでください。</div>
+    <button class="final-submit-popup-btn" onclick="finishCharge()">送信する</button>
+  </div>
 </div>
 
 <!-- 送信中オーバーレイ -->
@@ -662,8 +714,13 @@ function goChargePage2() {
   document.getElementById('charge-page-2').classList.add('visible');
 }
 
-async function finishCharge() {
+function showFinalSubmitPopup() {
   chargeData.pokemonCount = document.getElementById('charge-pokemon-count').value || null;
+  document.getElementById('final-submit-popup').classList.add('visible');
+}
+
+async function finishCharge() {
+  document.getElementById('final-submit-popup').classList.remove('visible');
 
   const answered = Object.entries(answers).map(([idx, choiceIdx]) => {
     const p = shuffled[parseInt(idx)];
