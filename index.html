@@ -527,6 +527,7 @@ const STORAGE_KEY = 'ame_survey_2026_done';
 const STORAGE_ANSWERS_KEY = 'ame_survey_2026_answers';
 const STORAGE_ORDER_KEY = 'ame_survey_2026_order';
 const STORAGE_CURRENT_KEY = 'ame_survey_2026_current';
+const STORAGE_RESULT_KEY = 'ame_survey_2026_result';
 const STORAGE_CHARGE_KEY = 'ame_survey_2026_charge';
 
 const SCORES = [7, 3, 0, -3, -7];
@@ -763,6 +764,8 @@ async function finishCharge() {
 
     // 送信済みフラグをローカルに保存
     localStorage.setItem(STORAGE_KEY, 'done');
+    // tier表生成用に、軽量な結果だけは残しておく（生の回答データは消す）
+    localStorage.setItem(STORAGE_RESULT_KEY, JSON.stringify(answered.map(a => ({id: a.id, score: a.score}))));
     localStorage.removeItem(STORAGE_ANSWERS_KEY);
     localStorage.removeItem(STORAGE_CURRENT_KEY);
     localStorage.removeItem(STORAGE_ORDER_KEY);
@@ -808,6 +811,7 @@ function resetAndStart() {
   localStorage.removeItem(STORAGE_ORDER_KEY);
   localStorage.removeItem(STORAGE_CURRENT_KEY);
   localStorage.removeItem(STORAGE_CHARGE_KEY);
+  localStorage.removeItem(STORAGE_RESULT_KEY);
   chargeAnswer = null;
   shuffled = shuffle(pokemon);
   localStorage.setItem(STORAGE_ORDER_KEY, JSON.stringify(shuffled.map(p => p.id)));
