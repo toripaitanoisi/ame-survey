@@ -424,6 +424,7 @@
         <div class="charge-input-note">最後の2桁を00にして入力してください（例：2438→2400）</div>
       </div>
       <button class="charge-next-btn" onclick="goChargePage2()">次へ →</button>
+      <button class="charge-back-link" onclick="backToSurveyFromCharge()">← ポケモンの回答に戻る</button>
       <button class="charge-skip-all" onclick="showFinalSubmitPopup()">全部スキップして完了する</button>
     </div>
 
@@ -712,6 +713,18 @@ function goChargePage1() {
 function goChargePage2() {
   document.getElementById('charge-page-1').classList.remove('visible');
   document.getElementById('charge-page-2').classList.add('visible');
+}
+
+function backToSurveyFromCharge() {
+  chargeData.pokemonCount = document.getElementById('charge-pokemon-count').value || null;
+
+  document.getElementById('charge-screen').classList.remove('visible');
+  document.getElementById('pokemon-card').style.display = '';
+  document.getElementById('choices').style.display = '';
+  document.getElementById('nav-row').style.display = '';
+  document.getElementById('progress-wrap').style.display = '';
+
+  showPokemon(current);
 }
 
 function showFinalSubmitPopup() {
