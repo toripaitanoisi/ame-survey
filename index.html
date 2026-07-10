@@ -297,6 +297,7 @@
   .charge-note-lead { font-size: 13px; font-weight: 600; color: var(--text); display: block; margin-bottom: 6px; }
   .charge-section { display: flex; flex-direction: column; gap: 8px; }
   .charge-section-title { font-size: 13px; font-weight: 700; color: var(--text); padding: 0 2px; }
+  .charge-section-subtitle { display: block; font-size: 11px; font-weight: 400; color: var(--text-sub); margin-top: 2px; }
   .charge-choices { display: flex; flex-direction: column; gap: 5px; }
   .charge-btn {
     width: 100%; padding: 13px 14px;
@@ -419,7 +420,7 @@
         </div>
       </div>
       <div class="charge-section">
-        <div class="charge-section-title">🐾 仲間にしたポケモン数</div>
+        <div class="charge-section-title">🐾 仲間にしたポケモン数<span class="charge-section-subtitle">アチーブメントの詳細からご確認ください</span></div>
         <input class="charge-input" type="number" id="charge-pokemon-count" placeholder="例：2400" min="0" max="99900" step="100" oninput="saveChargeInput()">
         <div class="charge-input-note">最後の2桁を00にして入力してください（例：2438→2400）</div>
       </div>
